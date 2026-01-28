@@ -106,10 +106,10 @@ async def health():
 
 @app.post("/webhook")
 async def webhook(req: Request):
+    print("🔥 Webhook HIT")   # <--- add this
     await ensure_initialized()
     data = await req.json()
-
     update = Update.de_json(data, ptb_app.bot)
     await ptb_app.process_update(update)
-
     return {"ok": True}
+
