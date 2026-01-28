@@ -45,6 +45,8 @@ function ChoiceButton({
         flexDirection: "column",
         alignItems: "center",
         gap: 8,
+        opacity: loaded ? 1 : 0,
+        transition: "opacity 0.15s ease-in",
       }}
     >
       <Image
@@ -56,9 +58,7 @@ function ChoiceButton({
         unoptimized
         onLoad={() => setLoaded(true)}
       />
-
-      {/* 👇 name appears ONLY after image loads */}
-      {loaded && <span>{label}</span>}
+      <span>{label}</span>
     </button>
   );
 }
