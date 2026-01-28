@@ -55,6 +55,7 @@ function ChoiceButton({
         width={120}
         height={120}
         loading="eager"
+        unoptimized
         onLoad={() => setLoaded(true)}
       />
       <span>{label}</span>
