@@ -22,6 +22,46 @@ function toFileKey(name: string) {
   return name.replace(/\s+/g, "").toLowerCase();
 }
 
+function ChoiceButton({
+  label,
+  src,
+  onClick,
+}: {
+  label: string;
+  src: string;
+  onClick: () => void;
+}) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: 18,
+        borderRadius: 14,
+        fontSize: 18,
+        cursor: "pointer",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 8,
+        opacity: loaded ? 1 : 0,
+        transition: "opacity 0.15s ease-in",
+      }}
+    >
+      <Image
+        src={src}
+        alt={label}
+        width={120}
+        height={120}
+        loading="eager"
+        onLoad={() => setLoaded(true)}
+      />
+      <span>{label}</span>
+    </button>
+  );
+}
+
 export default function Tournament({ title, items, imageBasePath }: Props) {
   const initial = useMemo(() => shuffle(items), [items]);
 
@@ -34,6 +74,7 @@ export default function Tournament({ title, items, imageBasePath }: Props) {
   const [index, setIndex] = useState(2);
   const [roundSize, setRoundSize] = useState(initial.length);
   const [winner, setWinner] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   function restart() {
     const s = shuffle(items);
@@ -120,23 +161,12 @@ export default function Tournament({ title, items, imageBasePath }: Props) {
               const src = `${imageBasePath}/${toFileKey(item)}.png`;
 
               return (
-                <button
+                <ChoiceButton
                   key={item}
+                  label={item}
+                  src={src}
                   onClick={() => choose(item)}
-                  style={{
-                    padding: 18,
-                    borderRadius: 14,
-                    fontSize: 18,
-                    cursor: "pointer",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  <Image src={src} alt={item} width={120} height={120} />
-                  <span>{item}</span>
-                </button>
+                />
               );
             })}
           </div>
