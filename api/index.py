@@ -1,15 +1,11 @@
 import os
 import random
 import asyncio
-from typing import Final
-
 from fastapi import FastAPI, Request
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler, ContextTypes
 )
-
-TOKEN: Final = os.environ["TOKEN"]  # set in Vercel env vars
 
 DISHES = [
     "Pizza", "Burger", "Sushi", "Pasta",
@@ -18,7 +14,15 @@ DISHES = [
     "Ice Cream", "Cake", "Fries", "Waffles"
 ]
 
-# ---------- Your handlers (same idea as your VS Code version) ----------
+# ✅ Vercel-friendly: expose as "app"
+app = FastAPI()
+
+# We create PTB app lazily so missing env vars don't crash at import time
+ptb_app = None
+_init_lock = asyncio.Lock()
+_initialized = False
+
+# ---------- Bot handlers ----------
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     dishes = DISHES.copy()
@@ -70,32 +74,37 @@ async def handle_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await send_next_round(update, context)
 
-# ---------- FastAPI + Telegram webhook glue ----------
-
-fastapi_app = FastAPI()
-
-ptb_app = Application.builder().token(TOKEN).build()
-ptb_app.add_handler(CommandHandler("start", start))
-ptb_app.add_handler(CallbackQueryHandler(handle_choice))
-
-_init_lock = asyncio.Lock()
-_initialized = False
+# ---------- Init glue ----------
 
 async def ensure_initialized():
-    global _initialized
+    global ptb_app, _initialized
+
     if _initialized:
         return
+
     async with _init_lock:
         if _initialized:
             return
+
+        token = os.getenv("TOKEN")
+        if not token:
+            # Clear message to debug env var issues on Vercel
+            raise RuntimeError("TOKEN env var is missing. Set it in Vercel → Settings → Environment Variables.")
+
+        ptb_app = Application.builder().token(token).build()
+        ptb_app.add_handler(CommandHandler("start", start))
+        ptb_app.add_handler(CallbackQueryHandler(handle_choice))
+
         await ptb_app.initialize()
         _initialized = True
 
-@fastapi_app.get("/")
-async def health():
-    return {"ok": True, "message": "Telegram bot is running"}
+# ---------- Routes ----------
 
-@fastapi_app.post("/webhook")
+@app.get("/")
+async def health():
+    return {"ok": True, "message": "Telegram bot endpoint is up"}
+
+@app.post("/webhook")
 async def webhook(req: Request):
     await ensure_initialized()
     data = await req.json()
