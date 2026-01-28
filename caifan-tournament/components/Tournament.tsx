@@ -6,7 +6,7 @@ import Image from "next/image";
 type Props = {
   title: string;
   items: string[];
-  imageBasePath: string; // e.g. "/images" or "/kpop"
+  imageBasePath: string;
 };
 
 function shuffle<T>(arr: T[]) {
@@ -45,8 +45,6 @@ function ChoiceButton({
         flexDirection: "column",
         alignItems: "center",
         gap: 8,
-        opacity: loaded ? 1 : 0,
-        transition: "opacity 0.15s ease-in",
       }}
     >
       <Image
@@ -58,7 +56,9 @@ function ChoiceButton({
         unoptimized
         onLoad={() => setLoaded(true)}
       />
-      <span>{label}</span>
+
+      {/* 👇 name appears ONLY after image loads */}
+      {loaded && <span>{label}</span>}
     </button>
   );
 }
